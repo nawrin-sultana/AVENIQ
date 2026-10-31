@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {mkdtempSync,readFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const out=mkdtempSync(join(tmpdir(),'aveniq-test-'));
+execFileSync('tsc',['lib/engine.ts','--module','commonjs','--target','ES2020','--outDir',out,'--skipLibCheck'],{cwd:process.cwd()});
+const {createRequire}=await import('node:module');const require=createRequire(import.meta.url);const e=require(join(out,'engine.js'));
+test('seed produces exact consistent dataset',()=>{const d=e.generateDatabase();assert.equal(d.accounts.length,500);assert.equal(d.contacts.length,1000);assert.equal(d.opportunities.length,750);assert.equal(d.activities.length,2000);assert.equal(d.cases.length,300);assert.equal(d.campaigns.length,100);const ids=new Set(d.accounts.map(a=>a.id));for(const v of [...d.contacts,...d.opportunities,...d.activities,...d.cases,...d.renewals,...d.subscriptions])assert.ok(ids.has(v.accountId));});
+test('health score clamps and classifies',()=>{const x=e.healthScore({usageChange:-100,engagement:0,supportCritical:8,paymentLate:true,stakeholderActive:false,csat:1,renewalDays:2});assert.equal(x.health,0);assert.equal(x.status,'At Risk');});
+test('summaries and scenarios are deterministic',()=>{const d=e.generateDatabase();const s=e.summarize(d);assert.ok(s.arr>0&&s.pipeline>0);assert.equal(s.accountCount,500);assert.equal(s.healthy+s.watch+s.atRisk,500);assert.deepEqual(e.simulate(d,{churn:5,upsell:10,win:2,acv:0}),e.simulate(d,{churn:5,upsell:10,win:2,acv:0}));});

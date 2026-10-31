@@ -1,0 +1,11 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+model Account { id String @id name String industry String segment String owner String arr Float renewalDays Int usageChange Float engagement Int supportCritical Int paymentLate Boolean stakeholderActive Boolean csat Float seatUtilization Float health Int opportunities Opportunity[] contacts Contact[] activities Activity[] cases SupportCase[] subscriptions Subscription[] renewals Renewal[] @@index([segment,health]) }
+model Contact { id String @id accountId String name String account Account @relation(fields:[accountId],references:[id]) }
+model Opportunity { id String @id accountId String name String amount Float probability Float stage String daysInactive Int nextStep Boolean createdDaysAgo Int account Account @relation(fields:[accountId],references:[id]) @@index([accountId,stage]) }
+model Activity { id String @id accountId String type String daysAgo Int account Account @relation(fields:[accountId],references:[id]) }
+model SupportCase { id String @id accountId String priority String open Boolean account Account @relation(fields:[accountId],references:[id]) }
+model Campaign { id String @id name String channel String spend Float leads Int opportunities Int influenced Float firstTouch Int lastTouch Int }
+model Subscription { id String @id accountId String arr Float seats Int usedSeats Int account Account @relation(fields:[accountId],references:[id]) }
+model Renewal { id String @id accountId String daysUntil Int arr Float account Account @relation(fields:[accountId],references:[id]) }
+model Recommendation { id String @id accountId String title String status String @default("Pending") assignedTo String? updatedAt DateTime @updatedAt }
